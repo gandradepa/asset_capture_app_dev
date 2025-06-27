@@ -1,0 +1,102 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Scan QR Code</title>
+  <script src="https://cdn.tailwindcss.com"></script>
+  <script src="https://unpkg.com/html5-qrcode"></script>
+</head>
+<body class="bg-gray-100 min-h-screen flex items-center justify-center">
+  <div class="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
+    <h2 class="text-xl font-bold text-center mb-4">Scan QR Code</h2>
+    <div id="qr-reader" class="w-full mb-4"></div>
+    <button type="button" id="startScanner" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 mb-4">Start Scanner</button>
+    <div id="qr_status" class="text-green-600 font-semibold text-sm mb-4"></div>
+    <form method="POST" action="/capture" class="space-y-4" id="startForm">
+      <input type="hidden" id="qr_code" name="qr_code" />
+
+      <div>
+        <label for="building_code" class="block text-sm font-medium">Select Building</label>
+        <select name="building_code" id="building_code" class="mt-1 w-full border rounded px-3 py-2">
+          <option value="">-- Select Building --</option>
+          {% for b in buildings %}
+          <option value="{{ b.code }}" {% if b.code == building_code %}selected{% endif %}>{{ b.name }}</option>
+          {% endfor %}
+        </select>
+      </div>
+
+      <div>
+        <label for="asset_type" class="block text-sm font-medium">Asset Type</label>
+        <select name="asset_type" id="asset_type" class="mt-1 w-full border rounded px-3 py-2">
+          <option value="" disabled selected>-- Select Type --</option>
+          <option value="Mechanical" {% if asset_type == 'Mechanical' %}selected{% endif %}>Mechanical</option>
+          <option value="Electrical" {% if asset_type == 'Electrical' %}selected{% endif %}>Electrical</option>
+        </select>
+      </div>
+
+      <button type="submit" id="nextBtn" disabled class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">Next</button>
+    </form>
+  </div>
+
+  <script>
+    document.addEventListener("DOMContentLoaded", function () {
+      const qrInput = document.getElementById("qr_code");
+      const qrStatus = document.getElementById("qr_status");
+      const nextButton = document.getElementById("nextBtn");
+      const form = document.getElementById("startForm");
+      const scannerBtn = document.getElementById("startScanner");
+
+      let html5QrCode;
+
+      function onScanSuccess(decodedText, decodedResult) {
+        const code = decodedText.split("/").pop();
+        qrInput.value = code;
+        qrStatus.textContent = "✅ QR Code Scanned: " + code;
+        nextButton.disabled = false;
+
+        // Play beep sound
+        const beep = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
+        beep.volume = 1.0;
+        beep.play();
+
+        // Trigger vibration if supported
+        if (navigator.vibrate) {
+          navigator.vibrate(200);
+        }
+
+        html5QrCode.stop();
+      }
+
+      scannerBtn.addEventListener("click", function () {
+        Html5Qrcode.getCameras().then(devices => {
+          if (devices && devices.length) {
+            html5QrCode = new Html5Qrcode("qr-reader");
+            html5QrCode.start(
+              devices[0].id,
+              { fps: 10, qrbox: 250 },
+              onScanSuccess,
+              error => {
+                qrStatus.textContent = "Scanning...";
+              }
+            ).catch(err => {
+              qrStatus.textContent = "⚠️ Unable to start scanner: " + err;
+            });
+          } else {
+            qrStatus.textContent = "⚠️ No camera devices found.";
+          }
+        }).catch(err => {
+          qrStatus.textContent = "⚠️ Unable to access camera: " + err;
+        });
+      });
+
+      form.addEventListener("submit", function (e) {
+        if (!qrInput.value.trim()) {
+          e.preventDefault();
+          alert("⚠️ Please scan a QR code before proceeding.");
+        }
+      });
+    });
+  </script>
+</body>
+</html>
