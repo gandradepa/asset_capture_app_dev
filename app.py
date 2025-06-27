@@ -4,6 +4,8 @@ from utils.building_lookup import get_buildings
 import pyodbc
 import os
 
+#package ready to run
+
 app = Flask(__name__)
 app.secret_key = 'ubc-qr-secret'
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
