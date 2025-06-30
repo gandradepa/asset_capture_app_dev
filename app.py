@@ -6,10 +6,12 @@ import os
 
 app = Flask(__name__)
 app.secret_key = 'ubc-qr-secret'
-app.config['UPLOAD_FOLDER'] = 'static/uploads'
+
+# ✅ New network path for uploads
+app.config['UPLOAD_FOLDER'] = r"S:\MaintOpsPlan\AssetMgt\Asset Management Process\Database\8. New Assets\QR_code_project\Capture_photos_upload"
 app.config['SESSION_TYPE'] = 'filesystem'
 
-SQLITE_DB_PATH = r"S:\\MaintOpsPlan\\AssetMgt\\Asset Management Process\\Database\\8. New Assets\\QR_code_project\\asset_capture_app\\data\\QR_codes.db"
+SQLITE_DB_PATH = r"S:\MaintOpsPlan\AssetMgt\Asset Management Process\Database\8. New Assets\QR_code_project\asset_capture_app\data\QR_codes.db"
 
 def get_db_connection():
     conn = sqlite3.connect(SQLITE_DB_PATH)

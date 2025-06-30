@@ -1,19 +1,21 @@
-import pyodbc
+import sqlite3
+
+SQLITE_DB_PATH = r"S:\\MaintOpsPlan\\AssetMgt\\Asset Management Process\\Database\\8. New Assets\\QR_code_project\\asset_capture_app\\data\\QR_codes.db"
+
+def get_db_connection():
+    conn = sqlite3.connect(SQLITE_DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 def get_buildings():
-    ACCESS_DB_PATH = r"S:\MaintOpsPlan\AssetMgt\Asset Management Process\Database\8. New Assets\QR_code_project\asset_capture_app\data\QR_codes.accdb"
-    conn_str = (
-        r"Driver={Microsoft Access Driver (*.mdb, *.accdb)};"
-        rf"DBQ={ACCESS_DB_PATH};"
-    )
     buildings = []
     try:
-        conn = pyodbc.connect(conn_str)
+        conn = get_db_connection()
         cursor = conn.cursor()
         cursor.execute("SELECT code, name FROM Buildings")
-        buildings = [{"code": row[0], "name": row[1]} for row in cursor.fetchall()]
-        cursor.close()
+        rows = cursor.fetchall()
+        buildings = [{"code": row["code"], "name": row["name"]} for row in rows]
         conn.close()
     except Exception as e:
-        print("⚠️ Failed to load buildings from Access DB:", e)
+        print("⚠️ Failed to load buildings from SQLite DB:", e)
     return buildings
