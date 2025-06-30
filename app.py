@@ -1,17 +1,20 @@
 from flask import Flask, render_template, request, redirect, url_for, flash, jsonify, session
 from utils.file_handler import handle_upload
 from utils.building_lookup import get_buildings
-import pyodbc
+import sqlite3
 import os
-
-#package ready to run
 
 app = Flask(__name__)
 app.secret_key = 'ubc-qr-secret'
 app.config['UPLOAD_FOLDER'] = 'static/uploads'
 app.config['SESSION_TYPE'] = 'filesystem'
 
-ACCESS_DB_PATH = r"S:\\MaintOpsPlan\\AssetMgt\\Asset Management Process\\Database\\8. New Assets\\QR_code_project\\asset_capture_app\\data\\QR_codes.accdb"
+SQLITE_DB_PATH = r"S:\\MaintOpsPlan\\AssetMgt\\Asset Management Process\\Database\\8. New Assets\\QR_code_project\\asset_capture_app\\data\\QR_codes.db"
+
+def get_db_connection():
+    conn = sqlite3.connect(SQLITE_DB_PATH)
+    conn.row_factory = sqlite3.Row
+    return conn
 
 @app.route('/')
 def start():
@@ -32,15 +35,9 @@ def capture():
     # Check if QR code already exists
     exists = False
     try:
-        conn_str = (
-            r"Driver={Microsoft Access Driver (*.mdb, *.accdb)};"
-            rf"DBQ={ACCESS_DB_PATH};"
-        )
-        conn = pyodbc.connect(conn_str)
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM QR_codes WHERE QR_code_ID = ?", (qr_code,))
+        conn = get_db_connection()
+        cursor = conn.execute("SELECT COUNT(*) FROM QR_codes WHERE QR_code_ID = ?", (qr_code,))
         exists = cursor.fetchone()[0] > 0
-        cursor.close()
         conn.close()
     except Exception as e:
         print("⚠️ Failed to check QR code on capture:", e)
@@ -63,20 +60,14 @@ def submit():
     result = handle_upload(data, files, app.config['UPLOAD_FOLDER'])
 
     try:
-        conn_str = (
-            r"Driver={Microsoft Access Driver (*.mdb, *.accdb)};"
-            rf"DBQ={ACCESS_DB_PATH};"
-        )
-        conn = pyodbc.connect(conn_str)
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM QR_codes WHERE QR_code_ID = ?", (result['qr_code'],))
+        conn = get_db_connection()
+        cursor = conn.execute("SELECT COUNT(*) FROM QR_codes WHERE QR_code_ID = ?", (result['qr_code'],))
         exists = cursor.fetchone()[0] > 0
         if not exists:
-            cursor.execute("INSERT INTO QR_codes (QR_code_ID) VALUES (?)", (result['qr_code'],))
+            conn.execute("INSERT INTO QR_codes (QR_code_ID) VALUES (?)", (result['qr_code'],))
             conn.commit()
         else:
             print(f"⚠️ QR code {result['qr_code']} already exists. Skipping insert.")
-        cursor.close()
         conn.close()
     except Exception as e:
         print("⚠️ Failed to insert QR code:", e)
@@ -88,15 +79,9 @@ def check_qr_code():
     qr_code = request.json.get('qr_code')
     exists = False
     try:
-        conn_str = (
-            r"Driver={Microsoft Access Driver (*.mdb, *.accdb)};"
-            rf"DBQ={ACCESS_DB_PATH};"
-        )
-        conn = pyodbc.connect(conn_str)
-        cursor = conn.cursor()
-        cursor.execute("SELECT COUNT(*) FROM QR_codes WHERE QR_code_ID = ?", (qr_code,))
+        conn = get_db_connection()
+        cursor = conn.execute("SELECT COUNT(*) FROM QR_codes WHERE QR_code_ID = ?", (qr_code,))
         exists = cursor.fetchone()[0] > 0
-        cursor.close()
         conn.close()
     except Exception as e:
         print("⚠️ Failed to check QR code:", e)
