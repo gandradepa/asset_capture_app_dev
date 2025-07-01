@@ -4,6 +4,12 @@ from utils.building_lookup import get_buildings
 import sqlite3
 import os
 
+# app.py - Flask application for QR code asset capture
+# This application allows users to capture asset information using QR codes,
+# upload photos, and store the data in a SQLite database.   
+# It also provides a web interface for users to interact with the application.  
+
+
 app = Flask(__name__)
 app.secret_key = 'ubc-qr-secret'
 
