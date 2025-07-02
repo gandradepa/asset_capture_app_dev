@@ -6,18 +6,17 @@ import os
 
 # app.py - Flask application for QR code asset capture
 # This application allows users to capture asset information using QR codes,
-# upload photos, and store the data in a SQLite database.   
-# It also provides a web interface for users to interact with the application.  
-
+# upload photos, and store the data in a SQLite database.
+# It also provides a web interface for users to interact with the application.
 
 app = Flask(__name__)
 app.secret_key = 'ubc-qr-secret'
 
-# ✅ New network path for uploads
-app.config['UPLOAD_FOLDER'] = r"S:\MaintOpsPlan\AssetMgt\Asset Management Process\Database\8. New Assets\QR_code_project\Capture_photos_upload"
+# ✅ Updated Ubuntu server path for uploads
+app.config['UPLOAD_FOLDER'] = '/home/gandrade/Capture_photos_upload'
 app.config['SESSION_TYPE'] = 'filesystem'
 
-SQLITE_DB_PATH = r"S:\MaintOpsPlan\AssetMgt\Asset Management Process\Database\8. New Assets\QR_code_project\asset_capture_app\data\QR_codes.db"
+SQLITE_DB_PATH = '/home/gandrade/assetcapture/data/QR_codes.db'
 
 def get_db_connection():
     conn = sqlite3.connect(SQLITE_DB_PATH)
@@ -100,3 +99,4 @@ if __name__ == '__main__':
     print("🚀 Flask app running...")
     print("🔗 Open your browser and go to: http://127.0.0.1:5000")
     app.run(debug=True, use_reloader=False)
+# Note: The app runs in debug mode for development purposes.

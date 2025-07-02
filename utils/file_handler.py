@@ -3,7 +3,7 @@ from werkzeug.utils import secure_filename
 import re
 import sqlite3
 
-SQLITE_DB_PATH = r"S:\MaintOpsPlan\AssetMgt\Asset Management Process\Database\8. New Assets\QR_code_project\asset_capture_app\data\QR_codes.db"
+SQLITE_DB_PATH = '/home/gandrade/assetcapture/data/QR_codes.db'
 
 def get_db_connection():
     conn = sqlite3.connect(SQLITE_DB_PATH)
@@ -23,13 +23,10 @@ def handle_upload(data, files, upload_folder):
     for key in files:
         file = files[key]
         if file and file.filename:
-            index = key.split('_')[-1]  # e.g., image_0, image_1
+            index = key.split('_')[-1]
             filename_raw = f"{qr_code} {building_code} {asset_type[:2].upper()} - {index}.jpg"
             filename_raw = re.sub(r'\s+', ' ', filename_raw).strip()
-            
-            # ✅ Do not replace spaces with underscores
             filename = filename_raw
-            
             save_path = os.path.join(upload_folder, filename)
             file.save(save_path)
             files_saved.append(filename)
@@ -39,10 +36,8 @@ def handle_upload(data, files, upload_folder):
         if filenames_no_ext:
             conn = get_db_connection()
             cursor = conn.cursor()
-
             qr_prefix = filenames_no_ext[0].split(' ')[0]
             cursor.execute("DELETE FROM QR_code_assets WHERE code_assets LIKE ?", (qr_prefix + '%',))
-
             for asset_code in filenames_no_ext:
                 cursor.execute(
                     "INSERT INTO QR_code_assets (code_assets, api_int) VALUES (?, ?)",

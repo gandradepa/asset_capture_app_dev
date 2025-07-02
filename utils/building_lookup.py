@@ -1,6 +1,6 @@
 import sqlite3
 
-SQLITE_DB_PATH = r"S:\\MaintOpsPlan\\AssetMgt\\Asset Management Process\\Database\\8. New Assets\\QR_code_project\\asset_capture_app\\data\\QR_codes.db"
+SQLITE_DB_PATH = '/home/gandrade/assetcapture/data/QR_codes.db'
 
 def get_db_connection():
     conn = sqlite3.connect(SQLITE_DB_PATH)
