@@ -15,7 +15,7 @@
         <ul class="text-left text-sm mb-4">
             {% for file in files_saved %}
                 <li class="mb-1">
-                    <span class="text-gray-700">{{ file }}</span>
+                    <a href="{{ url_for('static', filename='uploads/' + file) }}" class="text-blue-600 underline" target="_blank">{{ file }}</a>
                 </li>
             {% endfor %}
         </ul>

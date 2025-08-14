@@ -69,16 +69,24 @@
       }
 
       scannerBtn.addEventListener("click", function () {
-        html5QrCode = new Html5Qrcode("qr-reader");
-        html5QrCode.start(
-          { facingMode: { exact: "environment" } },
-          { fps: 10, qrbox: 250 },
-          onScanSuccess,
-          error => {
-            qrStatus.textContent = "Scanning...";
+        Html5Qrcode.getCameras().then(devices => {
+          if (devices && devices.length) {
+            html5QrCode = new Html5Qrcode("qr-reader");
+            html5QrCode.start(
+              devices[0].id,
+              { fps: 10, qrbox: 250 },
+              onScanSuccess,
+              error => {
+                qrStatus.textContent = "Scanning...";
+              }
+            ).catch(err => {
+              qrStatus.textContent = "⚠️ Unable to start scanner: " + err;
+            });
+          } else {
+            qrStatus.textContent = "⚠️ No camera devices found.";
           }
-        ).catch(err => {
-          qrStatus.textContent = "⚠️ Unable to start scanner: " + err;
+        }).catch(err => {
+          qrStatus.textContent = "⚠️ Unable to access camera: " + err;
         });
       });
 
