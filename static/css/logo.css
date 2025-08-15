@@ -1,0 +1,24 @@
+/* UBC Facilities top header / logo (global at top of every page) */
+.app-header {
+  position: sticky;
+  top: 0;
+  background: #002145;        /* UBC Blue */
+  padding: 10px 14px;
+  z-index: 1000;
+  box-shadow: 0 1px 4px rgba(0,0,0,0.15);
+}
+.app-header .logo-wrap {
+  display: flex;
+  align-items: center;
+  justify-content: center;    /* centered at top */
+}
+/* Doubled from original 40px → 80px */
+.app-header img {
+  height: 80px;
+  width: auto;
+  display: block;
+}
+/* Mobile: 36px → 72px (2×) */
+@media (max-width: 430px) {
+  .app-header img { height: 72px; }
+}

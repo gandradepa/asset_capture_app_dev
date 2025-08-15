@@ -1,28 +1,27 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <title>Upload Success</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-50 min-h-screen p-4">
-    <div class="max-w-md mx-auto bg-white p-6 rounded-xl shadow-md text-center">
-        <h2 class="text-xl font-bold mb-4">✅ Asset Registered Successfully!</h2>
+{% extends "base.html" %}
+{% block title %}Upload Success{% endblock %}
 
-        <p class="text-sm mb-2">Asset Code: <span class="font-mono font-semibold">{{ qr_code }}</span></p>
-        <p class="text-sm mb-4">Number of Pictures Uploaded: <strong>{{ files_saved|length }}</strong></p>
+{% block content %}
+  <div class="max-w-xl mx-auto bg-white p-6 rounded-xl shadow-md text-center">
+    <h2 class="text-xl font-bold mb-4">✅ Asset Registered Successfully!</h2>
 
-        <ul class="text-left text-sm mb-4">
-            {% for file in files_saved %}
-                <li class="mb-1">
-                    <a href="{{ url_for('static', filename='uploads/' + file) }}" class="text-blue-600 underline" target="_blank">{{ file }}</a>
-                </li>
-            {% endfor %}
-        </ul>
+    <p class="text-sm mb-2">Asset Code: <span class="font-mono font-semibold">{{ qr_code }}</span></p>
+    <p class="text-sm mb-4">Number of Pictures Uploaded: <strong>{{ files_saved|length }}</strong></p>
 
-        <form method="GET" action="/">
-            <button type="submit" class="bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">Register New Asset</button>
-        </form>
-    </div>
-</body>
-</html>
+    {% if files_saved %}
+      <ul class="text-left text-sm mb-4">
+        {% for file in files_saved %}
+          <li class="mb-1">
+            <a href="{{ url_for('uploaded_file', filename=file) }}" class="text-blue-600 underline" target="_blank">{{ file }}</a>
+          </li>
+        {% endfor %}
+      </ul>
+    {% else %}
+      <p class="text-sm text-gray-600 mb-4">No files were uploaded.</p>
+    {% endif %}
+
+    <a href="{{ url_for('start') }}" class="inline-block bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
+      Register New Asset
+    </a>
+  </div>
+{% endblock %}

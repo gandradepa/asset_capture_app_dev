@@ -1,92 +1,68 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Capture Asset Photos</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-</head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
-    <div class="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
-        <h2 class="text-xl font-bold text-center mb-4">Capture Asset Photos</h2>
-        <form method="POST" action="{{ url_for('submit') }}" enctype="multipart/form-data" class="space-y-4">
-            <input type="hidden" name="qr_code" value="{{ qr_code }}">
-            <input type="hidden" name="building_code" value="{{ building_code }}">
-            <input type="hidden" name="asset_type" value="{{ asset_type }}">
+{% extends "base.html" %}
+{% block title %}Capture Asset Photos{% endblock %}
 
-            {% if asset_type == 'Mechanical' %}
-                <div>
-                    <label class="block text-sm font-medium">Asset Plate</label>
-                    <input type="file" name="image_0" accept="image/*" capture="environment" onchange="previewImage(event, 'preview0')" class="mt-1">
-                    <button type="button" onclick="resetFile('image_0', 'preview0')" class="mt-2 block bg-yellow-500 text-white py-1 px-3 rounded hover:bg-yellow-600">Retake</button>
-                    <img id="preview0" class="mt-2 w-full max-h-48 object-contain hidden">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium">Asset Tag</label>
-                    <input type="file" name="image_1" accept="image/*" capture="environment" onchange="previewImage(event, 'preview1')" class="mt-1">
-                    <button type="button" onclick="resetFile('image_1', 'preview1')" class="mt-2 block bg-yellow-500 text-white py-1 px-3 rounded hover:bg-yellow-600">Retake</button>
-                    <img id="preview1" class="mt-2 w-full max-h-48 object-contain hidden">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium">Main Picture</label>
-                    <input type="file" name="image_2" accept="image/*" capture="environment" onchange="previewImage(event, 'preview2')" class="mt-1">
-                    <button type="button" onclick="resetFile('image_2', 'preview2')" class="mt-2 block bg-yellow-500 text-white py-1 px-3 rounded hover:bg-yellow-600">Retake</button>
-                    <img id="preview2" class="mt-2 w-full max-h-48 object-contain hidden">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium">TSBC Label</label>
-                    <input type="file" name="image_3" accept="image/*" capture="environment" onchange="previewImage(event, 'preview3')" class="mt-1">
-                    <button type="button" onclick="resetFile('image_3', 'preview3')" class="mt-2 block bg-yellow-500 text-white py-1 px-3 rounded hover:bg-yellow-600">Retake</button>
-                    <img id="preview3" class="mt-2 w-full max-h-48 object-contain hidden">
-                </div>
-            {% elif asset_type == 'Electrical' %}
-                <div>
-                    <label class="block text-sm font-medium">Asset Schedule Sheet</label>
-                    <input type="file" name="image_0" accept="image/*" capture="environment" onchange="previewImage(event, 'preview0')" class="mt-1">
-                    <button type="button" onclick="resetFile('image_0', 'preview0')" class="mt-2 block bg-yellow-500 text-white py-1 px-3 rounded hover:bg-yellow-600">Retake</button>
-                    <img id="preview0" class="mt-2 w-full max-h-48 object-contain hidden">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium">Asset Tag</label>
-                    <input type="file" name="image_1" accept="image/*" capture="environment" onchange="previewImage(event, 'preview1')" class="mt-1">
-                    <button type="button" onclick="resetFile('image_1', 'preview1')" class="mt-2 block bg-yellow-500 text-white py-1 px-3 rounded hover:bg-yellow-600">Retake</button>
-                    <img id="preview1" class="mt-2 w-full max-h-48 object-contain hidden">
-                </div>
-                <div>
-                    <label class="block text-sm font-medium">Main Picture</label>
-                    <input type="file" name="image_2" accept="image/*" capture="environment" onchange="previewImage(event, 'preview2')" class="mt-1">
-                    <button type="button" onclick="resetFile('image_2', 'preview2')" class="mt-2 block bg-yellow-500 text-white py-1 px-3 rounded hover:bg-yellow-600">Retake</button>
-                    <img id="preview2" class="mt-2 w-full max-h-48 object-contain hidden">
-                </div>
-            {% endif %}
+{% block content %}
+  <div class="rounded-xl shadow-md w-full overflow-hidden bg-white p-6">
+    <h2 class="text-xl font-bold text-center mb-4">Capture Asset Photos</h2>
 
-            <div class="flex justify-between mt-6">
-                <a href="/" class="inline-flex items-center px-4 py-2 bg-blue-100 text-blue-700 border border-blue-300 rounded hover:bg-blue-200">
-                    ⬅ Back to Step 1
-                </a>
-                <button type="submit" class="w-1/2 bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700 font-semibold">Submit</button>
-            </div>
-        </form>
-    </div>
+    <form method="POST" action="{{ url_for('submit') }}" enctype="multipart/form-data" class="space-y-4">
+      <input type="hidden" name="qr_code" value="{{ qr_code }}">
+      <input type="hidden" name="building_code" value="{{ building_code }}">
+      <input type="hidden" name="asset_type" value="{{ asset_type }}">
 
-    <script>
-        function previewImage(event, id) {
-            const reader = new FileReader();
-            const preview = document.getElementById(id);
-            reader.onload = () => {
-                preview.src = reader.result;
-                preview.classList.remove('hidden');
-            };
-            reader.readAsDataURL(event.target.files[0]);
-        }
+      {% if asset_type == 'Mechanical' %}
+        {% set fields = [
+          ('image_0','Asset Plate'),
+          ('image_1','UBC Tag'),
+          ('image_2','Main Asset Photo'),
+          ('image_3','Technical Safety BC')
+        ] %}
+      {% else %}
+        {% set fields = [
+          ('image_0','Asset Plate'),
+          ('image_1','UBC Tag'),
+          ('image_2','Main Asset Photo')
+        ] %}
+      {% endif %}
 
-        function resetFile(inputName, previewId) {
-            const input = document.querySelector(`input[name='${inputName}']`);
-            const preview = document.getElementById(previewId);
-            input.value = "";
-            preview.src = "";
-            preview.classList.add('hidden');
-        }
-    </script>
-</body>
-</html>
+      {% for name,label in fields %}
+      <div>
+        <label class="block text-sm font-medium">{{ label }}</label>
+        <div class="flex items-center gap-2">
+          <input type="file" name="{{ name }}" accept="image/*" capture="environment"
+                 onchange="previewImage(event, 'preview_{{ loop.index }}')" class="mt-1">
+          <a href="javascript:void(0)" onclick="resetFile('{{ name }}','preview_{{ loop.index }}')"
+             class="text-xs text-blue-600 underline ml-2">Retake</a>
+        </div>
+        <img id="preview_{{ loop.index }}" class="mt-2 hidden rounded border" alt="Preview {{ loop.index }}">
+      </div>
+      {% endfor %}
+
+      <div class="flex gap-2 pt-2">
+        <a href="{{ url_for('start', building_code=building_code, asset_type=asset_type) }}"
+           class="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded text-center hover:bg-gray-300">Back</a>
+        <button type="submit" class="flex-1 bg-green-600 text-white py-2 px-4 rounded hover:bg-green-700">
+          Submit
+        </button>
+      </div>
+    </form>
+  </div>
+
+  <script>
+    function previewImage(event, previewId) {
+      const img = document.getElementById(previewId);
+      const file = event.target.files[0];
+      if (!file) { img.classList.add('hidden'); img.src = ''; return; }
+      const reader = new FileReader();
+      reader.onload = e => { img.src = e.target.result; img.classList.remove('hidden'); };
+      reader.readAsDataURL(file);
+    }
+    function resetFile(inputName, previewId) {
+      const input = document.getElementsByName(inputName)[0];
+      input.value = '';
+      const img = document.getElementById(previewId);
+      img.classList.add('hidden');
+      img.src = '';
+    }
+  </script>
+{% endblock %}

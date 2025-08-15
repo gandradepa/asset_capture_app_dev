@@ -1,102 +1,182 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Scan QR Code</title>
-  <script src="https://cdn.tailwindcss.com"></script>
-  <script src="https://unpkg.com/html5-qrcode"></script>
-</head>
-<body class="bg-gray-100 min-h-screen flex items-center justify-center">
-  <div class="bg-white p-6 rounded-lg shadow-md w-full max-w-md">
-    <h2 class="text-xl font-bold text-center mb-4">Scan QR Code</h2>
-    <div id="qr-reader" class="w-full mb-4"></div>
-    <button type="button" id="startScanner" class="w-full bg-blue-500 text-white py-2 px-4 rounded hover:bg-blue-600 mb-4">Start Scanner</button>
-    <div id="qr_status" class="text-green-600 font-semibold text-sm mb-4"></div>
-    <form method="POST" action="/capture" class="space-y-4" id="startForm">
-      <input type="hidden" id="qr_code" name="qr_code" />
+{% extends "base.html" %}
+{% block title %}UBC Asset Capture — Start{% endblock %}
 
+{% block content %}
+  <!-- Card -->
+  <div class="rounded-xl shadow-md w-full overflow-hidden bg-white p-6">
+    <h1 class="text-xl font-bold text-center mb-4">Scan QR Code</h1>
+
+    <!-- Scanner viewport -->
+    <div id="qr-reader" class="w-full mb-4"></div>
+
+    <div class="flex gap-2 mb-3">
+      <button type="button" id="startScanner"
+              class="flex-1 bg-blue-600 text-white py-2 rounded hover:bg-blue-700">
+        Start Scanner
+      </button>
+      <button type="button" id="stopScanner"
+              class="flex-1 bg-gray-200 text-gray-800 py-2 rounded hover:bg-gray-300">
+        Stop
+      </button>
+    </div>
+
+    <div id="qr_status" class="text-sm text-center text-gray-700 mb-4">
+      Grant camera permission to scan.
+    </div>
+
+    <!-- Fallback manual entry -->
+    <details class="mb-4">
+      <summary class="cursor-pointer text-sm text-blue-700">Enter QR manually (fallback)</summary>
+      <input type="text" id="manual_qr" class="mt-2 w-full border rounded px-3 py-2"
+             placeholder="Type or paste QR code / URL" />
+      <button type="button" id="useManual"
+              class="mt-2 w-full bg-slate-600 text-white py-2 rounded hover:bg-slate-700">
+        Use this value
+      </button>
+    </details>
+
+    <!-- Start form -->
+    <form method="POST" action="/capture" class="space-y-4" id="startForm">
+      <!-- Hidden field populated by scanner/manual; we keep only the numeric ID -->
+      <input type="hidden" id="qr_code" name="qr_code" value="">
+
+      <!-- Building selection (display name, value = CODE) -->
       <div>
-        <label for="building_code" class="block text-sm font-medium">Select Building</label>
-        <select name="building_code" id="building_code" class="mt-1 w-full border rounded px-3 py-2">
+        <label for="building_code" class="block text-sm font-medium mb-1">Select Building</label>
+        <select name="building_code" id="building_code" class="w-full border rounded px-3 py-2" required>
           <option value="">-- Select Building --</option>
-          {% for b in buildings %}
-          <option value="{{ b.code }}" {% if b.code == building_code %}selected{% endif %}>{{ b.name }}</option>
+          {# building_options = [{code, name}] sorted by name #}
+          {% for b in building_options %}
+            <option value="{{ b.code }}" {% if building_code and b.code == building_code %}selected{% endif %}>
+              {{ b.name }}
+            </option>
           {% endfor %}
         </select>
       </div>
 
+      <!-- Asset type -->
       <div>
-        <label for="asset_type" class="block text-sm font-medium">Asset Type</label>
-        <select name="asset_type" id="asset_type" class="mt-1 w-full border rounded px-3 py-2">
-          <option value="" disabled selected>-- Select Type --</option>
+        <label for="asset_type" class="block text-sm font-medium mb-1">Asset Type</label>
+        <select name="asset_type" id="asset_type" class="w-full border rounded px-3 py-2" required>
           <option value="Mechanical" {% if asset_type == 'Mechanical' %}selected{% endif %}>Mechanical</option>
           <option value="Electrical" {% if asset_type == 'Electrical' %}selected{% endif %}>Electrical</option>
+          <option value="Backflow"   {% if asset_type == 'Backflow' %}selected{% endif %}>Backflow</option>
         </select>
       </div>
 
-      <button type="submit" id="nextBtn" disabled class="w-full bg-blue-500 text-white py-2 rounded hover:bg-blue-600">Next</button>
+      <button type="submit" class="w-full bg-green-600 text-white py-2 rounded hover:bg-green-700">
+        Continue
+      </button>
     </form>
   </div>
 
+  <!-- QR library -->
+  <script src="https://unpkg.com/html5-qrcode"></script>
+
   <script>
-    document.addEventListener("DOMContentLoaded", function () {
-      const qrInput = document.getElementById("qr_code");
+    (function () {
+      const qrReaderElem = document.getElementById("qr-reader");
+      const startBtn = document.getElementById("startScanner");
+      const stopBtn  = document.getElementById("stopScanner");
       const qrStatus = document.getElementById("qr_status");
-      const nextButton = document.getElementById("nextBtn");
-      const form = document.getElementById("startForm");
-      const scannerBtn = document.getElementById("startScanner");
+      const qrInput  = document.getElementById("qr_code");
+      const form     = document.getElementById("startForm");
+      const manual   = document.getElementById("manual_qr");
+      const useManualBtn = document.getElementById("useManual");
 
-      let html5QrCode;
+      let html5QrCode = null;
+      let scanning = false;
 
-      function onScanSuccess(decodedText, decodedResult) {
-        const code = decodedText.split("/").pop();
-        qrInput.value = code;
-        qrStatus.textContent = "✅ QR Code Scanned: " + code;
-        nextButton.disabled = false;
-
-        // Play beep sound
-        const beep = new Audio('https://actions.google.com/sounds/v1/alarms/beep_short.ogg');
-        beep.volume = 1.0;
-        beep.play();
-
-        // Trigger vibration if supported
-        if (navigator.vibrate) {
-          navigator.vibrate(200);
-        }
-
-        html5QrCode.stop();
+      // Extract best numeric ID (6+ digits) from any string/URL
+      function extractNumericId(text) {
+        if (!text) return "";
+        const matches = String(text).match(/\d{6,}/g);
+        if (!matches) return "";
+        // choose the longest; if tie, take the last (often the trailing ID)
+        let best = matches[0];
+        for (const m of matches) if (m.length >= best.length) best = m;
+        return best;
       }
 
-      scannerBtn.addEventListener("click", function () {
-        Html5Qrcode.getCameras().then(devices => {
-          if (devices && devices.length) {
-            html5QrCode = new Html5Qrcode("qr-reader");
-            html5QrCode.start(
-              devices[0].id,
-              { fps: 10, qrbox: 250 },
-              onScanSuccess,
-              error => {
-                qrStatus.textContent = "Scanning...";
-              }
-            ).catch(err => {
-              qrStatus.textContent = "⚠️ Unable to start scanner: " + err;
-            });
-          } else {
-            qrStatus.textContent = "⚠️ No camera devices found.";
-          }
-        }).catch(err => {
-          qrStatus.textContent = "⚠️ Unable to access camera: " + err;
-        });
-      });
+      function setQrValue(raw) {
+        const id = extractNumericId(raw) || (raw || "").trim();
+        qrInput.value = id;
+        if (id) {
+          qrStatus.textContent = "✅ QR captured: " + id;
+        } else {
+          qrStatus.textContent = "⚠️ Could not extract a numeric ID. Try again.";
+        }
+      }
 
-      form.addEventListener("submit", function (e) {
-        if (!qrInput.value.trim()) {
-          e.preventDefault();
-          alert("⚠️ Please scan a QR code before proceeding.");
+      function libraryReady() {
+        return typeof Html5Qrcode !== "undefined";
+      }
+
+      startBtn.addEventListener("click", async function () {
+        try {
+          if (!libraryReady()) {
+            qrStatus.textContent = "⚠️ QR library failed to load. Check internet/CSP.";
+            return;
+          }
+          if (!html5QrCode) html5QrCode = new Html5Qrcode("qr-reader");
+
+          const cameras = await Html5Qrcode.getCameras();
+          if (!cameras || !cameras.length) {
+            qrStatus.textContent = "⚠️ No cameras found.";
+            return;
+          }
+          const cameraId = cameras[0].id;
+
+          await html5QrCode.start(
+            cameraId,
+            { fps: 10, qrbox: 250 },
+            (decodedText) => {
+              setQrValue(decodedText);  // show only numeric ID
+              html5QrCode.stop().then(() => {
+                scanning = false;
+                qrReaderElem.innerHTML = "";
+              });
+            },
+            () => {} // ignore scan errors
+          );
+          scanning = true;
+          qrStatus.textContent = "📷 Scanning... hold the QR steadily.";
+        } catch (err) {
+          qrStatus.textContent = "⚠️ Unable to access camera: " + err;
         }
       });
-    });
+
+      stopBtn.addEventListener("click", function () {
+        if (html5QrCode && scanning) {
+          html5QrCode.stop().then(() => {
+            scanning = false;
+            qrReaderElem.innerHTML = "";
+            qrStatus.textContent = "Scanner stopped.";
+          });
+        }
+      });
+
+      useManualBtn.addEventListener("click", function () {
+        if (!manual.value.trim()) {
+          alert("Please type a QR value first.");
+          return;
+        }
+        setQrValue(manual.value); // also extracts numeric ID
+      });
+
+      // Safety net: ensure we submit only the numeric ID
+      form.addEventListener("submit", function (e) {
+        let v = (qrInput.value || "").trim();
+        if (!/^\d{6,}$/.test(v)) {
+          const id = extractNumericId(v);
+          if (id) {
+            qrInput.value = id;
+          } else {
+            e.preventDefault();
+            alert("⚠️ Please scan a QR code that contains a numeric ID.");
+          }
+        }
+      });
+    })();
   </script>
-</body>
-</html>
+{% endblock %}
