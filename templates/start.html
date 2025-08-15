@@ -2,7 +2,6 @@
 {% block title %}UBC Asset Capture — Start{% endblock %}
 
 {% block content %}
-  <!-- Card -->
   <div class="rounded-xl shadow-md w-full overflow-hidden bg-white p-6">
     <h1 class="text-xl font-bold text-center mb-4">Scan QR Code</h1>
 
@@ -20,9 +19,11 @@
       </button>
     </div>
 
-    <div id="qr_status" class="text-sm text-center text-gray-700 mb-4">
+    <div id="qr_status" class="text-sm text-center text-gray-700 mb-2">
       Grant camera permission to scan.
     </div>
+    <!-- Inline alert goes right under the status -->
+    <div id="qr_inline_alert" class="mb-4"></div>
 
     <!-- Fallback manual entry -->
     <details class="mb-4">
@@ -36,16 +37,16 @@
     </details>
 
     <!-- Start form -->
-    <form method="POST" action="/capture" class="space-y-4" id="startForm">
-      <!-- Hidden field populated by scanner/manual; we keep only the numeric ID -->
+    <form method="POST" action="{{ url_for('capture') }}" class="space-y-4" id="startForm">
+      <!-- Hidden fields populated by script -->
       <input type="hidden" id="qr_code" name="qr_code" value="">
+      <input type="hidden" id="overwrite" name="overwrite" value="0">
 
       <!-- Building selection (display name, value = CODE) -->
       <div>
         <label for="building_code" class="block text-sm font-medium mb-1">Select Building</label>
         <select name="building_code" id="building_code" class="w-full border rounded px-3 py-2" required>
           <option value="">-- Select Building --</option>
-          {# building_options = [{code, name}] sorted by name #}
           {% for b in building_options %}
             <option value="{{ b.code }}" {% if building_code and b.code == building_code %}selected{% endif %}>
               {{ b.name }}
@@ -80,38 +81,99 @@
       const stopBtn  = document.getElementById("stopScanner");
       const qrStatus = document.getElementById("qr_status");
       const qrInput  = document.getElementById("qr_code");
+      const overwriteInput = document.getElementById("overwrite");
       const form     = document.getElementById("startForm");
       const manual   = document.getElementById("manual_qr");
       const useManualBtn = document.getElementById("useManual");
+      const inlineAlert = document.getElementById("qr_inline_alert");
 
       let html5QrCode = null;
       let scanning = false;
+
+      // ---------- UI helpers ----------
+      function clearInlineAlert() {
+        inlineAlert.innerHTML = "";
+      }
+      function showInlineAlert(options) {
+        // options: { message, onContinue, onCancel }
+        inlineAlert.innerHTML = `
+          <div class="border rounded-lg p-3 bg-yellow-50 border-yellow-200">
+            <div class="text-sm text-yellow-900 mb-2">${options.message}</div>
+            <div class="flex gap-2">
+              <button type="button" id="alertContinue"
+                      class="flex-1 bg-yellow-600 text-white py-1.5 rounded hover:bg-yellow-700 text-sm">
+                Continue & replace
+              </button>
+              <button type="button" id="alertCancel"
+                      class="flex-1 bg-gray-200 text-gray-800 py-1.5 rounded hover:bg-gray-300 text-sm">
+                Scan another
+              </button>
+            </div>
+          </div>
+        `;
+        document.getElementById("alertContinue").onclick = options.onContinue;
+        document.getElementById("alertCancel").onclick = options.onCancel;
+      }
 
       // Extract best numeric ID (6+ digits) from any string/URL
       function extractNumericId(text) {
         if (!text) return "";
         const matches = String(text).match(/\d{6,}/g);
         if (!matches) return "";
-        // choose the longest; if tie, take the last (often the trailing ID)
         let best = matches[0];
         for (const m of matches) if (m.length >= best.length) best = m;
         return best;
       }
 
-      function setQrValue(raw) {
-        const id = extractNumericId(raw) || (raw || "").trim();
-        qrInput.value = id;
-        if (id) {
-          qrStatus.textContent = "✅ QR captured: " + id;
-        } else {
-          qrStatus.textContent = "⚠️ Could not extract a numeric ID. Try again.";
+      async function checkExists(numericId) {
+        try {
+          const res = await fetch(`{{ url_for('api_check_qr') }}?qr=${encodeURIComponent(numericId)}`);
+          const data = await res.json();
+          return !!(data && data.exists);
+        } catch (err) {
+          console.warn("QR existence check failed:", err);
+          return false; // fail-open
         }
       }
 
-      function libraryReady() {
-        return typeof Html5Qrcode !== "undefined";
+      async function handleExistence(numericId) {
+        overwriteInput.value = "0"; // reset
+        const exists = await checkExists(numericId);
+        if (!exists) { clearInlineAlert(); return true; }
+
+        // Show inline alert below the status (no popup)
+        showInlineAlert({
+          message: "This Asset already exists. Would you like to continue?",
+          onContinue: () => {
+            overwriteInput.value = "1";
+            qrStatus.textContent = "Overwrite enabled. You will replace existing data for this asset.";
+            clearInlineAlert();
+          },
+          onCancel: () => {
+            qrInput.value = "";
+            qrStatus.textContent = "QR cleared. Please scan another code.";
+            clearInlineAlert();
+          }
+        });
+        return false;
       }
 
+      function libraryReady() { return typeof Html5Qrcode !== "undefined"; }
+
+      async function setQrValueAndCheck(raw) {
+        clearInlineAlert();
+        const id = extractNumericId(raw) || (raw || "").trim();
+        if (!id) {
+          qrInput.value = "";
+          qrStatus.textContent = "⚠️ Could not extract a numeric ID. Try again.";
+          return;
+        }
+        qrInput.value = id;
+        qrStatus.textContent = "✅ QR captured: " + id;
+        await handleExistence(id);
+      }
+
+      // ---------- Scanner controls ----------
       startBtn.addEventListener("click", async function () {
         try {
           if (!libraryReady()) {
@@ -130,8 +192,8 @@
           await html5QrCode.start(
             cameraId,
             { fps: 10, qrbox: 250 },
-            (decodedText) => {
-              setQrValue(decodedText);  // show only numeric ID
+            async (decodedText) => {
+              await setQrValueAndCheck(decodedText);
               html5QrCode.stop().then(() => {
                 scanning = false;
                 qrReaderElem.innerHTML = "";
@@ -152,28 +214,54 @@
             scanning = false;
             qrReaderElem.innerHTML = "";
             qrStatus.textContent = "Scanner stopped.";
+            clearInlineAlert();
           });
         }
       });
 
-      useManualBtn.addEventListener("click", function () {
+      // ---------- Manual entry ----------
+      useManualBtn.addEventListener("click", async function () {
         if (!manual.value.trim()) {
           alert("Please type a QR value first.");
           return;
         }
-        setQrValue(manual.value); // also extracts numeric ID
+        await setQrValueAndCheck(manual.value);
       });
 
-      // Safety net: ensure we submit only the numeric ID
-      form.addEventListener("submit", function (e) {
+      // ---------- Submit guard ----------
+      form.addEventListener("submit", async function (e) {
         let v = (qrInput.value || "").trim();
         if (!/^\d{6,}$/.test(v)) {
           const id = extractNumericId(v);
           if (id) {
             qrInput.value = id;
+            v = id;
           } else {
             e.preventDefault();
             alert("⚠️ Please scan a QR code that contains a numeric ID.");
+            return;
+          }
+        }
+
+        // If the QR exists and overwrite is not yet enabled, block submit and show inline alert
+        if (overwriteInput.value !== "1") {
+          const exists = await checkExists(v);
+          if (exists) {
+            e.preventDefault();
+            showInlineAlert({
+              message: "This Asset already exists. Would you like to continue?",
+              onContinue: () => {
+                overwriteInput.value = "1";
+                qrStatus.textContent = "Overwrite enabled. You will replace existing data for this asset.";
+                clearInlineAlert();
+                form.submit(); // now proceed
+              },
+              onCancel: () => {
+                qrInput.value = "";
+                qrStatus.textContent = "QR cleared. Please scan another code.";
+                clearInlineAlert();
+              }
+            });
           }
         }
       });

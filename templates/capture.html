@@ -5,6 +5,31 @@
   <div class="rounded-xl shadow-md w-full overflow-hidden bg-white p-6">
     <h2 class="text-xl font-bold text-center mb-4">Capture Asset Photos</h2>
 
+    {# --- Existing uploads as thumbnails with quick delete and labels --- #}
+    <div>
+      <h3 class="text-sm font-semibold mb-2">Current uploads</h3>
+      {% if existing_files %}
+        <div id="uploadsGrid" class="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-6">
+          {% for f in existing_files %}
+            <div class="border rounded-lg p-2 text-center" data-filename="{{ f.filename }}">
+              <img src="{{ f.url }}" alt="{{ f.filename }}" class="w-full h-24 object-cover rounded mb-2">
+              <!-- Human-readable title -->
+              <div class="text-xs font-semibold text-gray-800">{{ f.label }}</div>
+              <!-- Small base string for reference -->
+              <div class="text-[11px] text-gray-500 truncate mb-2">{{ f.base }}</div>
+              <button type="button"
+                      class="delete-btn w-full text-red-700 border border-red-600 rounded py-1 text-xs hover:bg-red-50">
+                Delete
+              </button>
+            </div>
+          {% endfor %}
+        </div>
+      {% else %}
+        <p id="uploadsEmpty" class="text-sm text-gray-500 mb-6">No uploads yet.</p>
+        <div id="uploadsGrid" class="grid grid-cols-3 sm:grid-cols-4 gap-3 mb-6"></div>
+      {% endif %}
+    </div>
+
     <form method="POST" action="{{ url_for('submit') }}" enctype="multipart/form-data" class="space-y-4">
       <input type="hidden" name="qr_code" value="{{ qr_code }}">
       <input type="hidden" name="building_code" value="{{ building_code }}">
@@ -52,7 +77,7 @@
     function previewImage(event, previewId) {
       const img = document.getElementById(previewId);
       const file = event.target.files[0];
-      if (!file) { img.classList.add('hidden'); img.src = ''; return; }
+      if (!file) { img.classList.add('hidden'); img.src=''; return; }
       const reader = new FileReader();
       reader.onload = e => { img.src = e.target.result; img.classList.remove('hidden'); };
       reader.readAsDataURL(file);
@@ -61,8 +86,53 @@
       const input = document.getElementsByName(inputName)[0];
       input.value = '';
       const img = document.getElementById(previewId);
-      img.classList.add('hidden');
-      img.src = '';
+      img.classList.add('hidden'); img.src='';
     }
+
+    // Quick delete for existing uploads
+    (function () {
+      const grid = document.getElementById('uploadsGrid');
+      if (!grid) return;
+
+      grid.addEventListener('click', async (e) => {
+        if (!e.target.classList.contains('delete-btn')) return;
+        const card = e.target.closest('[data-filename]');
+        const filename = card.getAttribute('data-filename');
+        if (!confirm(`Delete "${filename}"?`)) return;
+
+        try {
+          const res = await fetch('{{ url_for("delete_upload") }}', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              qr_code: '{{ qr_code }}',
+              building_code: '{{ building_code }}',
+              asset_type: '{{ asset_type }}',
+              filename
+            })
+          });
+          const data = await res.json();
+          if (data.ok) {
+            card.remove();
+            const gridNow = document.querySelectorAll('#uploadsGrid [data-filename]').length;
+            if (gridNow === 0) {
+              const empty = document.getElementById('uploadsEmpty');
+              if (empty) empty.classList.remove('hidden');
+              else {
+                const p = document.createElement('p');
+                p.id = 'uploadsEmpty';
+                p.className = 'text-sm text-gray-500 mb-6';
+                p.textContent = 'No uploads yet.';
+                grid.parentNode.insertBefore(p, grid);
+              }
+            }
+          } else {
+            alert('Delete failed: ' + (data.error || 'unknown error'));
+          }
+        } catch (err) {
+          alert('Delete error: ' + err);
+        }
+      });
+    })();
   </script>
 {% endblock %}

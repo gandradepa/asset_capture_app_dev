@@ -1,27 +1,40 @@
 {% extends "base.html" %}
-{% block title %}Upload Success{% endblock %}
+{% block title %}Upload Successful{% endblock %}
 
 {% block content %}
-  <div class="max-w-xl mx-auto bg-white p-6 rounded-xl shadow-md text-center">
-    <h2 class="text-xl font-bold mb-4">✅ Asset Registered Successfully!</h2>
+  <div class="rounded-xl shadow-md w-full overflow-hidden bg-white p-6">
+    <h2 class="text-xl font-bold text-center mb-4">Upload Successful</h2>
 
-    <p class="text-sm mb-2">Asset Code: <span class="font-mono font-semibold">{{ qr_code }}</span></p>
-    <p class="text-sm mb-4">Number of Pictures Uploaded: <strong>{{ files_saved|length }}</strong></p>
+    <div class="grid grid-cols-1 sm:grid-cols-3 gap-3 text-sm mb-4">
+      <div><span class="font-semibold">QR:</span> {{ qr_code }}</div>
+      <div><span class="font-semibold">Building Code:</span> {{ building_code }}</div>
+      <div><span class="font-semibold">Asset Type:</span> {{ asset_type }}</div>
+    </div>
 
-    {% if files_saved %}
-      <ul class="text-left text-sm mb-4">
-        {% for file in files_saved %}
-          <li class="mb-1">
-            <a href="{{ url_for('uploaded_file', filename=file) }}" class="text-blue-600 underline" target="_blank">{{ file }}</a>
+    {% if files_saved and files_saved|length > 0 %}
+      <p class="text-sm mb-2">Saved files:</p>
+      <ul class="list-disc pl-5 mb-6">
+        {% for f in files_saved %}
+          <li>
+            <a class="text-blue-700 underline" href="{{ url_for('uploaded_file', filename=f) }}" target="_blank" rel="noopener">
+              {{ f }}
+            </a>
           </li>
         {% endfor %}
       </ul>
     {% else %}
-      <p class="text-sm text-gray-600 mb-4">No files were uploaded.</p>
+      <p class="text-sm text-gray-600 mb-6">No files were saved.</p>
     {% endif %}
 
-    <a href="{{ url_for('start') }}" class="inline-block bg-green-600 text-white px-4 py-2 rounded hover:bg-green-700">
-      Register New Asset
-    </a>
+    <div class="flex gap-2">
+      <a href="{{ url_for('capture', qr_code=qr_code, building_code=building_code, asset_type=asset_type) }}"
+         class="flex-1 bg-gray-200 text-gray-800 py-2 px-4 rounded text-center hover:bg-gray-300">
+        Back to Capture (review/delete)
+      </a>
+      <a href="{{ url_for('start', building_code=building_code, asset_type=asset_type) }}"
+         class="flex-1 bg-green-600 text-white py-2 px-4 rounded text-center hover:bg-green-700">
+        Start New Upload
+      </a>
+    </div>
   </div>
 {% endblock %}
