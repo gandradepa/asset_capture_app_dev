@@ -5,7 +5,12 @@
   <div class="rounded-xl shadow-md w-full overflow-hidden bg-white p-6">
     <h2 class="text-xl font-bold text-center mb-4">Capture Asset Photos</h2>
 
-    {# --- Existing uploads as thumbnails with quick delete and labels --- #}
+    {% if overwrite == '1' %}
+      <div class="mb-4 p-3 rounded bg-yellow-50 border border-yellow-200 text-sm">
+        Overwrite is <strong>ON</strong>: previous photos and DB rows for this QR will be replaced.
+      </div>
+    {% endif %}
+
     <div>
       <h3 class="text-sm font-semibold mb-2">Current uploads</h3>
       {% if existing_files %}
@@ -13,9 +18,7 @@
           {% for f in existing_files %}
             <div class="border rounded-lg p-2 text-center" data-filename="{{ f.filename }}">
               <img src="{{ f.url }}" alt="{{ f.filename }}" class="w-full h-24 object-cover rounded mb-2">
-              <!-- Human-readable title -->
               <div class="text-xs font-semibold text-gray-800">{{ f.label }}</div>
-              <!-- Small base string for reference -->
               <div class="text-[11px] text-gray-500 truncate mb-2">{{ f.base }}</div>
               <button type="button"
                       class="delete-btn w-full text-red-700 border border-red-600 rounded py-1 text-xs hover:bg-red-50">
@@ -34,6 +37,7 @@
       <input type="hidden" name="qr_code" value="{{ qr_code }}">
       <input type="hidden" name="building_code" value="{{ building_code }}">
       <input type="hidden" name="asset_type" value="{{ asset_type }}">
+      <input type="hidden" name="overwrite" value="{{ overwrite|default('0') }}">
 
       {% if asset_type == 'Mechanical' %}
         {% set fields = [
@@ -41,6 +45,12 @@
           ('image_1','UBC Tag'),
           ('image_2','Main Asset Photo'),
           ('image_3','Technical Safety BC')
+        ] %}
+      {% elif asset_type == 'Back Flow' %}
+        {% set fields = [
+          ('image_0','Asset Plate'),
+          ('image_1','Asset Plate (additional)'),
+          ('image_2','Main Photo')
         ] %}
       {% else %}
         {% set fields = [
@@ -89,11 +99,9 @@
       img.classList.add('hidden'); img.src='';
     }
 
-    // Quick delete for existing uploads
     (function () {
       const grid = document.getElementById('uploadsGrid');
       if (!grid) return;
-
       grid.addEventListener('click', async (e) => {
         if (!e.target.classList.contains('delete-btn')) return;
         const card = e.target.closest('[data-filename]');
@@ -114,17 +122,10 @@
           const data = await res.json();
           if (data.ok) {
             card.remove();
-            const gridNow = document.querySelectorAll('#uploadsGrid [data-filename]').length;
-            if (gridNow === 0) {
+            const remaining = document.querySelectorAll('#uploadsGrid [data-filename]').length;
+            if (remaining === 0) {
               const empty = document.getElementById('uploadsEmpty');
               if (empty) empty.classList.remove('hidden');
-              else {
-                const p = document.createElement('p');
-                p.id = 'uploadsEmpty';
-                p.className = 'text-sm text-gray-500 mb-6';
-                p.textContent = 'No uploads yet.';
-                grid.parentNode.insertBefore(p, grid);
-              }
             }
           } else {
             alert('Delete failed: ' + (data.error || 'unknown error'));
