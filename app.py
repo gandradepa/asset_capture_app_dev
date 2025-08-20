@@ -542,7 +542,7 @@ def health():
     return {"status": "ok", "time": datetime.utcnow().isoformat() + "Z"}
 
 if __name__ == "__main__":
-    port = int(os.environ.get("PORT", "5000"))
+    port = int(os.environ.get("PORT", "5001"))
     print("🚀 Flask app running...")
     print(f"🔗 Open your browser and go to: http://127.0.0.1:{port}")
     app.run(host="127.0.0.1", port=port, debug=True)
