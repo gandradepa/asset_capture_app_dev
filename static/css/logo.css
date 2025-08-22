@@ -4,7 +4,7 @@
   top: 0;
   background: #002145;        /* UBC Blue */
   padding: 10px 14px;
-  z-index: 1000;
+  z-index: 800;
   box-shadow: 0 1px 4px rgba(0,0,0,0.15);
 }
 .app-header .logo-wrap {
@@ -14,11 +14,11 @@
 }
 /* Doubled from original 40px → 80px */
 .app-header img {
-  height: 80px;
+  height: 150px;
   width: auto;
   display: block;
 }
 /* Mobile: 36px → 72px (2×) */
-@media (max-width: 430px) {
+@media (max-width: 400px) {
   .app-header img { height: 72px; }
 }
