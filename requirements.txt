@@ -1,3 +1,5 @@
+#requirements.txt
+
 Flask>=2.0
 Flask_SQLAlchemy>=3.0
 Flask_Marshmallow>=0.14.0
