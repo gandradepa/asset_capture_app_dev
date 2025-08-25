@@ -156,10 +156,9 @@
         try {
           if (!libraryReady()) { qrStatus.textContent = "⚠️ QR library failed to load."; return; }
           if (!html5QrCode) html5QrCode = new Html5Qrcode("qr-reader");
-          const cameras = await Html5Qrcode.getCameras();
-          if (!cameras || !cameras.length) { qrStatus.textContent = "⚠️ No cameras found."; return; }
+
           await html5QrCode.start(
-            cameras[0].id,
+            { facingMode: { exact: "environment" } }, // ✅ Force back camera on iOS
             { fps: 10, qrbox: 250 },
             async (decodedText) => {
               await setQrValueAndCheck(decodedText);
@@ -167,6 +166,7 @@
             },
             () => {}
           );
+
           scanning = true;
           qrStatus.textContent = "📷 Scanning... hold the QR steadily.";
         } catch (err) {
