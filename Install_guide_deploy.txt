@@ -1,0 +1,16 @@
+How to use
+
+Deploy Dev_environment (default):
+
+cd /home/developer/asset_capture_app_dev
+./deploy.sh
+
+
+Deploy another branch (e.g., main):
+
+./deploy.sh main
+
+
+Optionally specify host for HTTPS health check:
+
+./deploy.sh Dev_environment appprod.assetcap.facilities.ubc.ca
