@@ -46,12 +46,22 @@
           ('image_2','Main Asset Photo'),
           ('image_3','Technical Safety BC')
         ] %}
-      {% elif asset_type == 'Back Flow' %}
+
+      {% elif asset_type in ['Back Flow','Backflow'] %}
         {% set fields = [
           ('image_0','Asset Plate'),
           ('image_1','Asset Plate (additional)'),
           ('image_2','Main Photo')
         ] %}
+
+      {% elif asset_type == 'Electrical' %}
+        {# ✅ Novo mapeamento para Electrical #}
+        {% set fields = [
+          ('image_0','Asset Label (Optional)'),
+          ('image_1','UBC Asset Tag'),
+          ('image_2','Panel Schedule')
+        ] %}
+
       {% else %}
         {% set fields = [
           ('image_0','Asset Plate'),

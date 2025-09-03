@@ -4,7 +4,6 @@
 <div class="card shadow p-4">
     <h4 class="mb-3 text-primary">Register Asset</h4>
 
-    <!-- ✅ Flash messages -->
     {% with messages = get_flashed_messages(with_categories=true) %}
     {% if messages %}
     <div class="mb-3">
@@ -115,7 +114,7 @@ function startScanner() {
             qrScanner.stop();
             qrRegion.innerHTML = "<div class='text-success'>QR scanned: " + assetId + "</div>";
 
-            // Check for duplicates
+            // (Mantido) Verificação de duplicidade — ajuste o endpoint conforme seu app
             fetch('/check_qr_code', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -139,7 +138,8 @@ function toggleImageFields() {
     const imageFields = document.getElementById("image-fields");
     const imgLabels = {
         ME: ["Asset Plate", "Asset Tag", "Main Picture", "TSBC Label"],
-        EL: ["Asset Schedule Sheet", "Asset Tag", "Main Picture"]
+        // ✅ Atualizado para Electrical:
+        EL: ["Asset Label (Optional)", "UBC Asset Tag", "Panel Schedule"]
     };
 
     if (type === "ME" || type === "EL") {

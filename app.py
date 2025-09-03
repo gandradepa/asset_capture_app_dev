@@ -76,6 +76,7 @@ def seq_to_label(asset_type: str, seq: str) -> str:
     Map the photo sequence to a friendly label per asset type.
     - Mechanical: 0 Asset Plate, 1 UBC Tag, 2 Main Asset Photo, 3 Technical Safety BC
     - Back Flow:  0 Asset Plate, 1 Asset Plate (additional), 2 Main Photo
+    - Electrical: 0 Asset Label (Optional), 1 UBC Asset Tag, 2 Panel Schedule
     - Others:     0 Asset Plate, 1 UBC Tag, 2 Main Asset Photo
     """
     t = (asset_type or "").strip().lower()
@@ -87,6 +88,10 @@ def seq_to_label(asset_type: str, seq: str) -> str:
     if t == "mechanical":
         mech_map = {0: "Asset Plate", 1: "UBC Tag", 2: "Main Asset Photo", 3: "Technical Safety BC"}
         return mech_map.get(i, f"Photo {i}")
+
+    if t == "electrical":
+        el_map = {0: "Asset Label (Optional)", 1: "UBC Asset Tag", 2: "Panel Schedule"}
+        return el_map.get(i, f"Photo {i}")
 
     if t in ("back flow", "backflow", "back-flow", "bf", "back"):
         bf_map = {0: "Asset Plate", 1: "Asset Plate (additional)", 2: "Main Photo"}
@@ -541,19 +546,16 @@ def uploaded_file(filename):
 def health():
     return {"status": "ok", "time": datetime.utcnow().isoformat() + "Z"}
 
-#Exernal route unable
-
+# Exernal route unable
 """if __name__ == "__main__":
     port = int(os.environ.get("PORT", "5001"))
     print("🚀 Flask app running...")
     print(f"🔗 Open your browser and go to: http://127.0.0.1:{port}")
     app.run(host="127.0.0.1", port=port, debug=True)"""
 
-#External Conection activity
-
+# External Conection activity
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "5001"))
     print("🚀 Flask app running...")
     print(f"🔗 Open your browser and go to: http://0.0.0.0:{port}")
     app.run(host="0.0.0.0", port=port, debug=True)
-
