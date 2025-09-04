@@ -17,14 +17,14 @@
     {% endif %}
     {% endwith %}
 
-    <!-- ✅ QR Code Scanner -->
+    <!-- ? QR Code Scanner -->
     <div class="mb-3">
         <label class="form-label">Live QR Code Scanner</label>
         <div id="qr-reader" style="width: 100%; max-width: 400px;"></div>
         <button type="button" class="btn btn-outline-primary mt-2" onclick="startScanner()">Start Scanner</button>
     </div>
 
-    <!-- ⚠️ Modal: Duplicate QR Code -->
+    <!-- ?? Modal: Duplicate QR Code -->
     <div class="modal fade" id="duplicateModal" tabindex="-1" aria-labelledby="duplicateModalLabel" aria-hidden="true">
         <div class="modal-dialog modal-dialog-centered">
             <div class="modal-content">
@@ -73,7 +73,7 @@
             </select>
         </div>
 
-        <!-- 📷 Image Uploads -->
+        <!-- ?? Image Uploads -->
         <div id="image-fields" style="display: none;">
             {% for i in range(4) %}
             <div class="mb-3" id="img{{i}}-group" style="display: {{ 'none' if i == 3 else 'block' }};">
@@ -95,7 +95,7 @@
     </form>
 </div>
 
-<!-- 📦 Bootstrap + QR -->
+<!-- ?? Bootstrap + QR -->
 <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
 <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 <script src="https://unpkg.com/html5-qrcode"></script>
@@ -114,7 +114,7 @@ function startScanner() {
             qrScanner.stop();
             qrRegion.innerHTML = "<div class='text-success'>QR scanned: " + assetId + "</div>";
 
-            // (Mantido) Verificação de duplicidade — ajuste o endpoint conforme seu app
+            // (Mantido) Verifica��o de duplicidade � ajuste o endpoint conforme seu app
             fetch('/check_qr_code', {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
@@ -138,7 +138,7 @@ function toggleImageFields() {
     const imageFields = document.getElementById("image-fields");
     const imgLabels = {
         ME: ["Asset Plate", "Asset Tag", "Main Picture", "TSBC Label"],
-        // ✅ Atualizado para Electrical:
+        // ? Atualizado para Electrical:
         EL: ["Asset Label (Optional)", "UBC Asset Tag", "Panel Schedule"]
     };
 

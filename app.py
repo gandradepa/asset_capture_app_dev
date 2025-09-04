@@ -549,13 +549,14 @@ def health():
 # Exernal route unable
 """if __name__ == "__main__":
     port = int(os.environ.get("PORT", "5001"))
-    print("🚀 Flask app running...")
-    print(f"🔗 Open your browser and go to: http://127.0.0.1:{port}")
+    print("?? Flask app running...")
+    print(f"?? Open your browser and go to: http://127.0.0.1:{port}")
     app.run(host="127.0.0.1", port=port, debug=True)"""
 
 # External Conection activity
 if __name__ == "__main__":
     port = int(os.environ.get("PORT", "5001"))
-    print("🚀 Flask app running...")
-    print(f"🔗 Open your browser and go to: http://0.0.0.0:{port}")
+    print("?? Flask app running...")
+    print(f"?? Open your browser and go to: http://0.0.0.0:{port}")
     app.run(host="0.0.0.0", port=port, debug=True)
+
